@@ -1,18 +1,43 @@
-# what_to_watch/opinions_app.py
-
 from datetime import datetime
 from random import randrange
 
-# Добавлена функция render_template
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, TextAreaField, URLField
+from wtforms.validators import DataRequired, Length, Optional
 
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = "f9a7c58f-8be6-4e69-ac61-4a9ba220610e"
 
 db = SQLAlchemy(app)
+
+
+class OpinionForm(FlaskForm):
+    title = StringField(
+        "Введите название фильма",
+        validators=[
+            DataRequired(message="Обязательное поле"),
+            Length(1, 128),
+        ],
+    )
+    text = TextAreaField(
+        "Напишите мнение",
+        validators=[
+            DataRequired(message="Обязательное поле"),
+        ],
+    )
+    source = URLField(
+        "Добавьте ссылку на подробный обзор фильма",
+        validators=[
+            Length(1, 256),
+            Optional(),
+        ],
+    )
+    submit = SubmitField("Добавить")
 
 
 class Opinion(db.Model):
@@ -35,13 +60,13 @@ def index_view():
 
 @app.route("/add")
 def add_opinion_view():
-    return render_template("add_opinion.html")
+    form = OpinionForm()
+    return render_template("add_opinion.html", form=form)
 
 
 @app.route("/opinions/<int:opinion_id>")
 def opinion_view(opinion_id):
-    opinion = Opinion.query.get(opinion_id)
-    print(opinion)
+    opinion = Opinion.query.get_or_404(opinion_id)
     return render_template("opinion.html", opinion=opinion)
 
 
