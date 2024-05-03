@@ -1,8 +1,8 @@
-# what_to_watch/opinions_app.py
-
+import csv
 from datetime import datetime
 from random import randrange
 
+import click
 from flask import Flask, abort, flash, redirect, render_template, url_for
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -92,6 +92,20 @@ def page_not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return render_template("500.html"), 500
+
+
+@app.cli.command("load_opinions")
+def load_opinions_command():
+    """Функция загрузки мнений в базу данных."""
+    with open("opinions.csv", encoding="utf-8") as opinions_file:
+        reader = csv.DictReader(opinions_file)
+        counter = 0
+        for row in reader:
+            opinion = Opinion(**row)
+            db.session.add(opinion)
+            db.session.commit()
+            counter += 1
+    click.echo(f"Загружено мнений: {counter}")
 
 
 if __name__ == "__main__":
