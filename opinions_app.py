@@ -14,9 +14,10 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = "MY SECRET KEY"
+app.config["SECRET_KEY"] = "SECRET KEY"
 
 db = SQLAlchemy(app)
+
 migrate = Migrate(app, db)
 
 
@@ -64,12 +65,11 @@ def add_opinion_view():
     if form.validate_on_submit():
         text = form.text.data
         if Opinion.query.filter_by(text=text).first() is not None:
-            flash("Такое мнение уже было оставлено ранее", "free-message")
+            flash("Такое мнение уже было оставлено ранее!", "free-message")
             return render_template("add_opinion.html", form=form)
-
         opinion = Opinion(
             title=form.title.data,
-            text=form.text.data,
+            text=text,
             source=form.source.data,
         )
         db.session.add(opinion)
@@ -78,7 +78,7 @@ def add_opinion_view():
     return render_template("add_opinion.html", form=form)
 
 
-@app.route("/opinions/<int:id>")
+@app.route("/opinion/<int:id>")
 def opinion_view(id):
     opinion = Opinion.query.get_or_404(id)
     return render_template("opinion.html", opinion=opinion)
@@ -91,14 +91,15 @@ def page_not_found(error):
 
 @app.errorhandler(500)
 def internal_error(error):
+    db.session.rollback()
     return render_template("500.html"), 500
 
 
 @app.cli.command("load_opinions")
 def load_opinions_command():
     """Функция загрузки мнений в базу данных."""
-    with open("opinions.csv", encoding="utf-8") as opinions_file:
-        reader = csv.DictReader(opinions_file)
+    with open("opinions.csv", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
         counter = 0
         for row in reader:
             opinion = Opinion(**row)
