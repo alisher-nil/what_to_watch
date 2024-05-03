@@ -61,7 +61,7 @@ def add_opinion_view():
     if form.validate_on_submit():
         text = form.text.data
         if Opinion.query.filter_by(text=text).first() is not None:
-            flash("Такое мнение уже было оставлено ранее")
+            flash("Такое мнение уже было оставлено ранее", "free-message")
             return render_template("add_opinion.html", form=form)
 
         opinion = Opinion(
