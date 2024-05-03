@@ -133,4 +133,4 @@ dmypy.json
 .idea
 
 *.ipynb
-template_archive/
+archive/
